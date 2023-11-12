@@ -1,21 +1,17 @@
 """
-This code attempts to remove watermarks in a very simple yet naive way given a
-large set of images watermarked in the same way.
+This code attempts to remove watermarks given a
+large set of images watermarked with the following process:
 
-Watermarks are applied in the following way:
 watermaked_image = alpha * watermark + (1 - alpha) * image
 
-And can be removed by estimating the alpha and watermark mask via:
+The watermark can be removed by estimating the alpha and watermark mask with:
 image = (watermarked_image - alpha * watermark) / (1 - alpha)
 
-The code works in the following way:
-1. Get the median of the gradients: This step takes the median of all the single
-image gradients. Assuming the watermark is in the same location on each
-image, this leaves behind the gradient of the watermark.
-2. Watermark is reconstructed: The derivatives are then used to reconstuct the
-original watermark by integrating them. This reconstructed watermark is the
-alpha value. The alpha is also thresholded to get the mask.
-3. Image is recovered: The image is recovered using equation 2.
+To estimate alpha and mask:
+1. Calculate the median of the x,y gradients of the image
+2. Intgrate the median of the gradients -> alpha
+3. Threshold alpha -> mask
+4. Recover the imag using equation 2
 """
 import os
 import argparse
@@ -70,8 +66,8 @@ def integrate_gradients(grad_x, grad_y):
 
     int_y = np.empty(grad_y.shape)
     for z in range(grad_y.shape[2]):
-        for y in range(grad_y.shape[0]):
-            for x in range(grad_y.shape[1]):
+        for y in range(grad_y.shape[1]):
+            for x in range(grad_y.shape[0]):
                 elev_prev = elev
                 elev += grad_y[x, y, z]
                 int_y[x, y, z] = (elev + elev_prev) / 2
